@@ -7,7 +7,14 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+            "@Components/*": ["src/components/*"],
+            "@Services/*": ["src/services/*"],
+            "@Hooks/*": ["src/hooks/*"],
+            "@Utils/*": ["src/utils/*"],
+            "@Assets/*": ["src/assets/*"],
+            "@Pages/*": ["src/pages/*"],
+            "@Features/*": ["src/features/*"],
+            "@/*": ["./src/*"]
     }
   }
 }
