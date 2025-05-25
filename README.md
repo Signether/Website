@@ -1,54 +1,173 @@
-# React + TypeScript + Vite
+# 🖋️ Signather - Digital Signature Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🔍 What is Signather?
 
-Currently, two official plugins are available:
+Signather is a **decentralized digital signature platform** built on **React + TypeScript + Vite** that integrates with the **DEHR (Decentralized Hash Registry)** smart contract on Optimism. It provides a modern, user-friendly interface for **digitally signing documents** and **registering file hashes** on-chain.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Think of it as a digital notary 📋 - providing immutable proof of document signatures and ownership with blockchain verification.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ✨ Features
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- ✅ Modern React interface with TypeScript support  
+- ✅ Seamless Web3 wallet integration  
+- ✅ Document upload and SHA-256 hash generation  
+- ✅ Digital signature creation and verification  
+- ✅ On-chain hash registration via DEHR contract  
+- ✅ Responsive design with Tailwind CSS  
+- ✅ Real-time signature status tracking  
+- ✅ Export signed documents with proofs  
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript + Vite  
+- **Styling**: Tailwind CSS  
+- **Web3**: ethers.js / wagmi  
+- **Blockchain**: Optimism Network  
+- **Smart Contract**: DEHR (Decentralized Hash Registry)  
+- **Build Tool**: Vite with SWC  
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ or Bun  
+- MetaMask or another Web3 wallet  
+- Optimism network configured in wallet  
+
+### Installation
+
+```bash
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+
+# Build for production
+bun run build
+
+# Preview production build
+bun run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+# Run with hot module replacement
+bun run dev
 ```
+
+The app will be available at `http://localhost:5173`
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── pages/          # Application pages
+├── hooks/          # Custom React hooks
+├── utils/          # Utility functions
+├── contracts/      # Contract ABIs and addresses
+├── types/          # TypeScript type definitions
+└── assets/         # Static assets
+```
+
+---
+
+## 🔧 Configuration
+
+The project uses path aliases configured in `vite.config.ts`:
+
+```typescript
+resolve: {
+  alias: {
+    "@": path.resolve(__dirname, "./src"),
+  },
+}
+```
+
+This allows clean imports like `import { Button } from "@/components/ui/button"`
+
+---
+
+## 🌐 Web3 Integration
+
+Signather connects to the DEHR smart contract on Optimism to:
+
+1. **Register document hashes** on-chain for immutable proof  
+2. **Verify existing registrations** and ownership  
+3. **Track signature timestamps** with blockchain precision  
+4. **Provide decentralized attestation** of document authenticity  
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run unit tests
+bun run test
+
+# Run tests with coverage
+bun run test:coverage
+
+# Run E2E tests
+bun run test:e2e
+```
+
+---
+
+## 📦 Building & Deployment
+
+```bash
+# Build for production
+bun run build
+
+# Deploy to your preferred hosting platform
+# (Vercel, Netlify, AWS S3, etc.)
+```
+
+---
+
+## 🔗 Related Projects
+
+- **[DEHR Smart Contract](/root/Projects/Signather/DEHR)** - The underlying blockchain registry  
+- **Optimism Network** - Layer 2 scaling solution for Ethereum  
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project  
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)  
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)  
+4. Push to the branch (`git push origin feature/AmazingFeature`)  
+5. Open a Pull Request  
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- Built with [Vite](https://vitejs.dev/) for lightning-fast development  
+- Styled with [Tailwind CSS](https://tailwindcss.com/) for modern UI  
+- Powered by [React](https://reactjs.org/) and [TypeScript](https://www.typescriptlang.org/)  
+- Secured by [Optimism](https://optimism.io/) blockchain technology  
+
+---
+
+> "Digital signatures, powered by blockchain transparency." ✍️🔗
