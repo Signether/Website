@@ -123,9 +123,11 @@ const Hero = () => {
                             className="mt-6 flex items-center gap-4"
                             variants={itemVariants}
                         >
-                            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                                <Button className="cursor-pointer">Open App</Button>
-                            </motion.div>
+                            <Link to={"/app"}>
+                                <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                                    <Button className="cursor-pointer">Open App</Button>
+                                </motion.div>
+                            </Link>
                             <Link to={"https://gov.signather.org/"}>
                                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                                     <Button variant={"outline"} className="cursor-pointer">
@@ -177,7 +179,7 @@ const Hero = () => {
                         </motion.div>
                     </div>
                 </motion.div>
-            </div>
+            </div >
             <motion.div
                 className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
                 initial={{ opacity: 0, y: 20 }}
@@ -209,7 +211,7 @@ const Hero = () => {
                     </motion.div>
                 </motion.button>
             </motion.div>
-        </section>
+        </section >
     );
 };
 
