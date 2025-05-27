@@ -90,8 +90,8 @@ const Upload = () => {
                 // Update progress
                 setProgress(((i + 0.5) / files.length) * 100);
 
-                // Register hash on blockchain
-                await registerHash(hash);
+                // Register hash on blockchain with filename
+                await registerHash(hash, file.name);
 
                 // Update progress
                 setProgress(((i + 1) / files.length) * 100);
@@ -295,23 +295,6 @@ const Upload = () => {
                                         <Progress value={progress} className="w-full" />
                                     </motion.div>
                                 )}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Document Details</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <Label htmlFor="description">Description (Optional)</Label>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Describe the documents..."
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        disabled={uploading}
-                                    />
-                                </div>
                             </CardContent>
                         </Card>
                     </motion.div>

@@ -22,7 +22,7 @@ export const WalletConnect = () => {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(`https://sepolia-optimism.etherscan.io/address/${address}`, '_blank')}
+                    onClick={() => window.open(`https://optimistic.etherscan.io/address/${address}`, '_blank')}
                 >
                     <ExternalLink className="h-3 w-3" />
                 </Button>

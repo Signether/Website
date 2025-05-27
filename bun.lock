@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "signather-website",
+      "name": "Signether-website",
       "dependencies": {
         "@metamask/detect-provider": "^2.0.0",
         "@radix-ui/react-dialog": "^1.1.14",

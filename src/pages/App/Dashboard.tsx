@@ -40,13 +40,11 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filter documents based on search term
     const filteredDocuments = recentDocuments.filter(doc =>
         doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.hash.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Calculate stats based on real data
     const stats = [
         {
             title: "Total Documents",
@@ -87,52 +85,35 @@ const Dashboard = () => {
         return 'Just now';
     };
 
-    const generateDocumentName = (hash: string): string => {
-        // Generate a more realistic document name based on hash
-        const types = ['Contract', 'Agreement', 'Legal_Document', 'Business_Plan', 'Invoice', 'Certificate'];
-        const extensions = ['.pdf', '.docx', '.txt'];
-
-        const hashNum = parseInt(hash.slice(2, 6), 16);
-        const type = types[hashNum % types.length];
-        const ext = extensions[hashNum % extensions.length];
-        const version = (hashNum % 10) + 1;
-
-        return `${type}_v${version}${ext}`;
-    };
-
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Initialize read-only contract if wallet not connected
                 await ethereumService.initializeReadOnly();
 
                 if (isConnected && address) {
-                    // Check if wallet is registered
                     const registered = await ethereumService.isWalletRegistered(address);
                     setIsWalletRegistered(registered);
 
-                    // Get wallet registration data if registered
                     if (registered) {
                         const data = await ethereumService.getRegistrant(address);
                         setWalletData(data);
                     }
 
-                    // Fetch user's documents
                     const registrations = await ethereumService.getAllDocumentRegistrations(address);
                     const documents: DocumentData[] = registrations.map(reg => ({
-                        name: generateDocumentName(reg.hash),
+                        name: reg.filename,
                         hash: `${reg.hash.slice(0, 6)}...${reg.hash.slice(-4)}`,
-                        status: "Verified", // All registered hashes are verified
+                        status: "Verified",
                         timestamp: formatTimestamp(reg.timestamp),
                         registrant: reg.registrantName || walletData?.name || "Unknown",
                         transactionHash: reg.transactionHash
                     }));
+
                     setRecentDocuments(documents);
 
-                    // Get network information
                     const provider = ethereumService.getProvider();
                     if (provider) {
                         const network = await provider.getNetwork();
@@ -146,10 +127,9 @@ const Dashboard = () => {
                         });
                     }
                 } else {
-                    // If not connected, fetch recent documents from all users
                     const registrations = await ethereumService.getAllDocumentRegistrations();
                     const documents: DocumentData[] = registrations.slice(0, 10).map(reg => ({
-                        name: generateDocumentName(reg.hash),
+                        name: reg.filename,
                         hash: `${reg.hash.slice(0, 6)}...${reg.hash.slice(-4)}`,
                         status: "Verified",
                         timestamp: formatTimestamp(reg.timestamp),
@@ -158,7 +138,6 @@ const Dashboard = () => {
                     }));
                     setRecentDocuments(documents);
                 }
-
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
                 setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
@@ -227,22 +206,23 @@ const Dashboard = () => {
                     transition={{ duration: 0.6 }}
                 >
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Dashboard
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                             {walletData?.name && (
-                                <span className="text-lg font-normal text-muted-foreground ml-2">
-                                    - {walletData.name}
-                                </span>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-sm font-medium text-primary">{walletData.name}</span>
+                                    {address && (
+                                        <Badge variant="outline" className="text-xs">
+                                            {address.slice(0, 6)}...{address.slice(-4)}
+                                        </Badge>
+                                    )}
+                                </div>
                             )}
-                        </h1>
+                        </div>
                         <p className="text-muted-foreground">
                             Manage your digital signatures and document verification
                         </p>
-                        {address && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Connected: {address.slice(0, 6)}...{address.slice(-4)}
-                            </p>
-                        )}
                     </div>
                     <Link to={"/app/upload"}>
                         <motion.div
@@ -285,9 +265,6 @@ const Dashboard = () => {
                                     <div className="text-2xl font-bold">
                                         {loading ? "Loading..." : stat.value}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        <span className="text-green-600">{stat.change}</span> from last month
-                                    </p>
                                 </CardContent>
                             </Card>
                         </motion.div>

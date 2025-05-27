@@ -1,23 +1,25 @@
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
 
-// Contract ABI for your DEHR contract
 export const DEHR_ABI = [
     "function registerWallet(string calldata registrantName) external",
-    "function registerHash(bytes32 fileHash) external",
+    "function registerHash(bytes32 fileHash, string calldata filename) external",
     "function isRegistered(bytes32 fileHash) external view returns (bool)",
-    "function getRegistration(bytes32 fileHash) external view returns (address, string, uint256)",
+    "function getRegistration(bytes32 fileHash) external view returns (address, string, string, uint256)",
     "function isWalletRegistered(address wallet) external view returns (bool)",
     "function getRegistrant(address wallet) external view returns (string, uint256, bool)",
-    "event HashRegistered(bytes32 indexed fileHash, address indexed registrant, string indexed registrantName, uint256 timestamp)",
+    "function getAllHashesCount() external view returns (uint256)",
+    "function getHashByIndex(uint256 index) external view returns (bytes32)",
+    "function getUserHashesCount(address user) external view returns (uint256)",
+    "function getUserHashByIndex(address user, uint256 index) external view returns (bytes32)",
+    "event HashRegistered(bytes32 indexed fileHash, address indexed registrant, string indexed registrantName, string filename, uint256 timestamp)",
     "event RegistrantRegistered(address indexed wallet, string indexed registrantName, uint256 timestamp)"
 ];
 
 export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
-// Optimism network configuration
 export const OPTIMISM_CONFIG = {
-    chainId: '0xa', // 10 in hex (lowercase)
+    chainId: '0xa',
     chainName: 'Optimism',
     nativeCurrency: {
         name: 'Ethereum',
@@ -32,6 +34,7 @@ interface DocumentRegistration {
     hash: string;
     registrant: string;
     registrantName: string;
+    filename: string;
     timestamp: number;
     blockNumber: number;
     transactionHash: string;
@@ -53,20 +56,16 @@ export class EthereumService {
 
             this.provider = new ethers.BrowserProvider(window.ethereum);
 
-            // Request account access
             await this.provider.send("eth_requestAccounts", []);
 
             this.signer = await this.provider.getSigner();
             const address = await this.signer.getAddress();
 
-            // Initialize contract
             this.contract = new ethers.Contract(CONTRACT_ADDRESS, DEHR_ABI, this.signer);
 
-            // Initialize read-only contract for querying
             const readOnlyProvider = new ethers.JsonRpcProvider('https://mainnet.optimism.io');
             this.readOnlyContract = new ethers.Contract(CONTRACT_ADDRESS, DEHR_ABI, readOnlyProvider);
 
-            // Check if we're on the correct network
             await this.switchToOptimism();
 
             return address;
@@ -84,7 +83,6 @@ export class EthereumService {
                 { chainId: OPTIMISM_CONFIG.chainId }
             ]);
         } catch (switchError: any) {
-            // This error code indicates that the chain has not been added to MetaMask
             if (switchError.code === 4902) {
                 try {
                     await this.provider.send('wallet_addEthereumChain', [OPTIMISM_CONFIG]);
@@ -108,8 +106,13 @@ export class EthereumService {
     async getRegistrant(address: string): Promise<{ name: string; timestamp: number; isActive: boolean }> {
         const contract = this.contract || this.readOnlyContract;
         if (!contract) throw new Error('Contract not initialized');
-        const [name, timestamp, isActive] = await contract.getRegistrant(address);
-        return { name, timestamp: timestamp.toString(), isActive };
+        const result = await contract.getRegistrant(address);
+
+        const name = typeof result[0] === 'string' ? result[0] : result[0].toString();
+        const timestamp = typeof result[1] === 'number' ? result[1] : Number(result[1].toString());
+        const isActive = Boolean(result[2]);
+
+        return { name, timestamp, isActive };
     }
 
     async registerWallet(name: string): Promise<ethers.ContractTransactionResponse> {
@@ -117,9 +120,9 @@ export class EthereumService {
         return await this.contract.registerWallet(name);
     }
 
-    async registerHash(hash: string): Promise<ethers.ContractTransactionResponse> {
+    async registerHash(hash: string, filename: string): Promise<ethers.ContractTransactionResponse> {
         if (!this.contract) throw new Error('Contract not initialized');
-        return await this.contract.registerHash(hash);
+        return await this.contract.registerHash(hash, filename);
     }
 
     async isHashRegistered(hash: string): Promise<boolean> {
@@ -128,60 +131,105 @@ export class EthereumService {
         return await contract.isRegistered(hash);
     }
 
-    async getHashRegistration(hash: string): Promise<{ registrant: string; registrantName: string; timestamp: number }> {
+    async getHashRegistration(hash: string): Promise<{ registrant: string; registrantName: string; filename: string; timestamp: number }> {
         const contract = this.contract || this.readOnlyContract;
         if (!contract) throw new Error('Contract not initialized');
-        const [registrant, registrantName, timestamp] = await contract.getRegistration(hash);
-        return { registrant, registrantName, timestamp: timestamp.toString() };
+        const result = await contract.getRegistration(hash);
+
+        const registrant = typeof result[0] === 'string' ? result[0] : result[0].toString();
+        const registrantName = typeof result[1] === 'string' ? result[1] : result[1].toString();
+        const filename = typeof result[2] === 'string' ? result[2] : result[2].toString();
+        const timestamp = typeof result[3] === 'number' ? result[3] : Number(result[3].toString());
+
+        return { registrant, registrantName, filename, timestamp };
     }
 
-    // New method to fetch all document registrations
     async getAllDocumentRegistrations(userAddress?: string): Promise<DocumentRegistration[]> {
         const contract = this.readOnlyContract || this.contract;
         if (!contract) throw new Error('Contract not initialized');
 
         try {
-            // Query HashRegistered events
-            const filter = contract.filters.HashRegistered();
-            const events = await contract.queryFilter(filter, -10000); // Last 10k blocks
-
             const registrations: DocumentRegistration[] = [];
 
-            for (const event of events) {
-                if ('args' in event && event.args) {
-                    const [fileHash, registrant, registrantName, timestamp] = event.args;
+            if (userAddress) {
+                const userHashCount = await contract.getUserHashesCount(userAddress);
+                console.log(`Found ${userHashCount} hashes for user ${userAddress}`);
 
-                    // Filter by user address if provided
-                    if (userAddress && registrant.toLowerCase() !== userAddress.toLowerCase()) {
-                        continue;
+                for (let i = 0; i < userHashCount; i++) {
+                    try {
+                        const hash = await contract.getUserHashByIndex(userAddress, i);
+                        const registration = await this.getHashRegistration(hash);
+
+                        registrations.push({
+                            hash,
+                            registrant: registration.registrant,
+                            registrantName: registration.registrantName,
+                            filename: registration.filename,
+                            timestamp: registration.timestamp,
+                            blockNumber: 0,
+                            transactionHash: ''
+                        });
+                    } catch (error) {
+                        console.warn(`Failed to get registration for hash at index ${i}:`, error);
                     }
+                }
+            } else {
+                const totalHashCount = await contract.getAllHashesCount();
+                console.log(`Found ${totalHashCount} total hashes`);
 
-                    registrations.push({
-                        hash: fileHash,
-                        registrant,
-                        registrantName,
-                        timestamp: Number(timestamp),
-                        blockNumber: event.blockNumber,
-                        transactionHash: event.transactionHash
-                    });
+                for (let i = 0; i < totalHashCount; i++) {
+                    try {
+                        const hash = await contract.getHashByIndex(i);
+                        const registration = await this.getHashRegistration(hash);
+
+                        registrations.push({
+                            hash,
+                            registrant: registration.registrant,
+                            registrantName: registration.registrantName,
+                            filename: registration.filename,
+                            timestamp: registration.timestamp,
+                            blockNumber: 0, // Not available from enumeration
+                            transactionHash: '' // Not available from enumeration
+                        });
+                    } catch (error) {
+                        console.warn(`Failed to get registration for hash at index ${i}:`, error);
+                    }
                 }
             }
 
-            // Sort by timestamp (newest first)
             return registrations.sort((a, b) => b.timestamp - a.timestamp);
         } catch (error) {
             console.error('Error fetching document registrations:', error);
-            return [];
+            throw error;
         }
     }
 
-    // Get user's document count
     async getUserDocumentCount(userAddress: string): Promise<number> {
-        const registrations = await this.getAllDocumentRegistrations(userAddress);
-        return registrations.length;
+        const contract = this.readOnlyContract || this.contract;
+        if (!contract) throw new Error('Contract not initialized');
+
+        try {
+            const count = await contract.getUserHashesCount(userAddress);
+            return Number(count.toString());
+        } catch (error) {
+            console.error('Error getting user document count:', error);
+            return 0;
+        }
     }
 
-    // Initialize read-only contract for cases where wallet isn't connected
+    async getTotalDocumentCount(): Promise<number> {
+        const contract = this.readOnlyContract || this.contract;
+        if (!contract) throw new Error('Contract not initialized');
+
+        try {
+            const count = await contract.getAllHashesCount();
+            return Number(count.toString());
+        } catch (error) {
+            console.error('Error getting total document count:', error);
+            return 0;
+        }
+    }
+
     async initializeReadOnly(): Promise<void> {
         if (!this.readOnlyContract) {
             const readOnlyProvider = new ethers.JsonRpcProvider('https://mainnet.optimism.io');

@@ -83,12 +83,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
     };
 
-    const registerHash = async (hash: string) => {
+    const registerHash = async (hash: string, filename: string) => {
         try {
             setIsLoading(true);
             setError(null);
 
-            const tx = await ethereumService.registerHash(hash);
+            const tx = await ethereumService.registerHash(hash, filename);
             await tx.wait();
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to register hash');

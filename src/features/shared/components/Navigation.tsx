@@ -30,10 +30,7 @@ const Navigation = () => {
         if (isConnected && address) {
             return (
                 <div className="flex items-center gap-3">
-                    <motion.div
-                        className="hidden sm:flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 backdrop-blur-sm"
-                        whileHover={{ scale: 1.02 }}
-                    >
+                    <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 backdrop-blur-sm">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                             <span className="text-sm font-medium text-primary">
@@ -45,7 +42,7 @@ const Navigation = () => {
                                 Registered
                             </Badge>
                         )}
-                    </motion.div>
+                    </div>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Button
                             variant="outline"
@@ -92,43 +89,42 @@ const Navigation = () => {
                             </Badge>
                         )}
                     </div>
-                    <Button
-                        variant="outline"
-                        className="w-full gap-2 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
-                        onClick={() => {
-                            disconnectWallet();
-                            setIsOpen(false);
-                        }}
-                    >
-                        <LogOut className="h-4 w-4" />
-                        Disconnect Wallet
-                    </Button>
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button
+                            variant="outline"
+                            className="w-full gap-2 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
+                            onClick={() => {
+                                disconnectWallet();
+                                setIsOpen(false);
+                            }}
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Disconnect Wallet
+                        </Button>
+                    </motion.div>
                 </div>
             );
         }
 
         return (
-            <Button
-                className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80"
-                onClick={() => {
-                    connectWallet();
-                    setIsOpen(false);
-                }}
-                disabled={isLoading}
-            >
-                <Wallet className="h-4 w-4" />
-                {isLoading ? "Connecting..." : "Connect Wallet"}
-            </Button>
+            <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                    className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80"
+                    onClick={() => {
+                        connectWallet();
+                        setIsOpen(false);
+                    }}
+                    disabled={isLoading}
+                >
+                    <Wallet className="h-4 w-4" />
+                    {isLoading ? "Connecting..." : "Connect Wallet"}
+                </Button>
+            </motion.div>
         );
     };
 
     return (
-        <motion.nav
-            className="border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm"
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-        >
+        <nav className="border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     <Link to="/" className="flex items-center gap-3">
@@ -141,7 +137,7 @@ const Navigation = () => {
                                 <span className="text-white font-bold text-lg">🖋️</span>
                             </div>
                             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                                Signather
+                                Signether
                             </span>
                         </motion.div>
                     </Link>
@@ -151,15 +147,13 @@ const Navigation = () => {
                             const disabled = item.requiresConnection && !isConnected;
                             return (
                                 <Link key={item.path} to={disabled ? "#" : item.path}>
-                                    <motion.div
+                                    <div
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${isActive(item.path)
                                             ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md shadow-primary/25"
                                             : disabled
                                                 ? "text-muted-foreground/50 cursor-not-allowed"
                                                 : "hover:bg-accent hover:text-accent-foreground"
                                             }`}
-                                        whileHover={disabled ? {} : { scale: 1.05, y: -1 }}
-                                        whileTap={disabled ? {} : { scale: 0.95 }}
                                     >
                                         {item.icon}
                                         <span className="text-sm font-medium">{item.label}</span>
@@ -168,7 +162,7 @@ const Navigation = () => {
                                                 Connect
                                             </Badge>
                                         )}
-                                    </motion.div>
+                                    </div>
                                 </Link>
                             );
                         })}
@@ -200,15 +194,13 @@ const Navigation = () => {
                                                 to={disabled ? "#" : item.path}
                                                 onClick={() => !disabled && setIsOpen(false)}
                                             >
-                                                <motion.div
+                                                <div
                                                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive(item.path)
                                                         ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground"
                                                         : disabled
                                                             ? "text-muted-foreground/50 cursor-not-allowed"
                                                             : "hover:bg-accent hover:text-accent-foreground"
                                                         }`}
-                                                    whileHover={disabled ? {} : { x: 4 }}
-                                                    whileTap={disabled ? {} : { scale: 0.98 }}
                                                 >
                                                     {item.icon}
                                                     <span className="font-medium">{item.label}</span>
@@ -217,7 +209,7 @@ const Navigation = () => {
                                                             Connect
                                                         </Badge>
                                                     )}
-                                                </motion.div>
+                                                </div>
                                             </Link>
                                         );
                                     })}
@@ -231,7 +223,7 @@ const Navigation = () => {
                     </Sheet>
                 </div>
             </div>
-        </motion.nav>
+        </nav>
     );
 };
 

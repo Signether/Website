@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Search, CheckCircle, XCircle, Hash, User, Clock, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, CheckCircle, XCircle, Hash, User, Clock, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from "@Features/shared/components/Navigation";
+import { ethereumService } from "@/lib/ethereum";
 
 interface VerificationResult {
     isValid: boolean;
@@ -14,53 +16,154 @@ interface VerificationResult {
     registrant: string;
     registrantName: string;
     timestamp: string;
-    blockNumber: number;
-    transactionHash: string;
+    blockNumber?: number;
+    transactionHash?: string;
+}
+
+interface RecentVerification {
+    hash: string;
+    status: "Valid" | "Invalid";
+    registrant: string;
+    timestamp: string;
 }
 
 const Verify = () => {
     const [hashInput, setHashInput] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [recentVerifications, setRecentVerifications] = useState<RecentVerification[]>([]);
+    const [networkStats, setNetworkStats] = useState({
+        totalHashes: 0,
+        verifiedToday: 0,
+        successRate: "98.7%",
+        avgQueryTime: "1.2s"
+    });
 
-    const handleVerify = async () => {
-        setIsVerifying(true);
+    // Initialize read-only contract on component mount
+    useEffect(() => {
+        ethereumService.initializeReadOnly();
+        loadRecentVerifications();
+        loadNetworkStats();
+    }, []);
 
-        // Simulate verification process
-        setTimeout(() => {
-            setVerificationResult({
-                isValid: true,
-                hash: hashInput,
-                registrant: "0x742d35Cc6634C0532925a3b8D4E3C",
-                registrantName: "John Doe",
-                timestamp: "2024-01-15T10:30:00Z",
-                blockNumber: 15234567,
-                transactionHash: "0x8f4e...9c12"
-            });
-            setIsVerifying(false);
-        }, 2000);
+    const loadRecentVerifications = async () => {
+        try {
+            const registrations = await ethereumService.getAllDocumentRegistrations();
+            const recent = registrations.slice(0, 3).map(reg => ({
+                hash: `${reg.hash.slice(0, 6)}...${reg.hash.slice(-4)}`,
+                status: "Valid" as const,
+                registrant: reg.registrantName,
+                timestamp: formatTimeAgo(reg.timestamp)
+            }));
+            setRecentVerifications(recent);
+        } catch (error) {
+            console.error('Failed to load recent verifications:', error);
+        }
     };
 
-    const recentVerifications = [
-        {
-            hash: "0x8f4e...9c12",
-            status: "Valid",
-            registrant: "Alice Smith",
-            timestamp: "2 hours ago"
-        },
-        {
-            hash: "0x7a3d...8b45",
-            status: "Valid",
-            registrant: "Bob Wilson",
-            timestamp: "5 hours ago"
-        },
-        {
-            hash: "0x9e8f...7c23",
-            status: "Invalid",
-            registrant: "Unknown",
-            timestamp: "1 day ago"
+    const loadNetworkStats = async () => {
+        try {
+            const registrations = await ethereumService.getAllDocumentRegistrations();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTimestamp = Math.floor(today.getTime() / 1000);
+
+            const verifiedToday = registrations.filter(reg => reg.timestamp >= todayTimestamp).length;
+
+            setNetworkStats({
+                totalHashes: registrations.length,
+                verifiedToday,
+                successRate: "98.7%",
+                avgQueryTime: "1.2s"
+            });
+        } catch (error) {
+            console.error('Failed to load network stats:', error);
         }
-    ];
+    };
+
+    const formatTimeAgo = (timestamp: number): string => {
+        const now = Math.floor(Date.now() / 1000);
+        const diff = now - timestamp;
+
+        if (diff < 3600) {
+            const minutes = Math.floor(diff / 60);
+            return `${minutes} minutes ago`;
+        } else if (diff < 86400) {
+            const hours = Math.floor(diff / 3600);
+            return `${hours} hours ago`;
+        } else {
+            const days = Math.floor(diff / 86400);
+            return `${days} days ago`;
+        }
+    };
+
+    const validateHash = (hash: string): boolean => {
+        // Check if it's a valid hex string (with or without 0x prefix)
+        const cleanHash = hash.startsWith('0x') ? hash.slice(2) : hash;
+        return /^[a-fA-F0-9]{64}$/.test(cleanHash);
+    };
+
+    const handleVerify = async () => {
+        if (!hashInput.trim()) {
+            setError("Please enter a document hash");
+            return;
+        }
+
+        // Validate hash format
+        if (!validateHash(hashInput.trim())) {
+            setError("Invalid hash format. Please enter a valid SHA-256 hash (64 hex characters)");
+            return;
+        }
+
+        setIsVerifying(true);
+        setError(null);
+        setVerificationResult(null);
+
+        try {
+            // Ensure hash has 0x prefix for contract call
+            const formattedHash = hashInput.startsWith('0x') ? hashInput : `0x${hashInput}`;
+
+            // Check if hash is registered
+            const isRegistered = await ethereumService.isHashRegistered(formattedHash);
+
+            if (isRegistered) {
+                // Get registration details
+                const registration = await ethereumService.getHashRegistration(formattedHash);
+
+                setVerificationResult({
+                    isValid: true,
+                    hash: formattedHash,
+                    registrant: registration.registrant,
+                    registrantName: registration.registrantName,
+                    timestamp: new Date(registration.timestamp * 1000).toISOString()
+                });
+            } else {
+                setVerificationResult({
+                    isValid: false,
+                    hash: formattedHash,
+                    registrant: "",
+                    registrantName: "",
+                    timestamp: ""
+                });
+            }
+
+            // Refresh recent verifications after a successful query
+            loadRecentVerifications();
+
+        } catch (error: any) {
+            console.error('Verification failed:', error);
+            setError(error.message || "Failed to verify hash. Please try again.");
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !isVerifying && hashInput.trim()) {
+            handleVerify();
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background">
@@ -74,7 +177,7 @@ const Verify = () => {
                 >
                     <h1 className="text-3xl font-bold tracking-tight">Verify Documents</h1>
                     <p className="text-muted-foreground">
-                        Verify the authenticity and registration status of document hashes on the blockchain
+                        Verify the authenticity and registration status of document hashes on the Optimism blockchain
                     </p>
                 </motion.div>
 
@@ -95,10 +198,11 @@ const Verify = () => {
                                     <div className="flex gap-2 mt-1">
                                         <Input
                                             id="hash"
-                                            placeholder="0x8f4e9c12..."
+                                            placeholder="0x8f4e9c12a3b7d5e6f8901234567890abcdef1234567890abcdef1234567890ab"
                                             value={hashInput}
                                             onChange={(e) => setHashInput(e.target.value)}
-                                            className="font-mono"
+                                            onKeyPress={handleKeyPress}
+                                            className="font-mono text-sm"
                                         />
                                         <motion.div
                                             whileHover={{ scale: 1.05 }}
@@ -106,7 +210,7 @@ const Verify = () => {
                                         >
                                             <Button
                                                 onClick={handleVerify}
-                                                disabled={!hashInput || isVerifying}
+                                                disabled={!hashInput.trim() || isVerifying}
                                                 className="gap-2"
                                             >
                                                 <Search className="h-4 w-4" />
@@ -114,7 +218,18 @@ const Verify = () => {
                                             </Button>
                                         </motion.div>
                                     </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Enter a 64-character hexadecimal string (with or without 0x prefix)
+                                    </p>
                                 </div>
+
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+
                                 {isVerifying && (
                                     <motion.div
                                         className="flex items-center justify-center py-8"
@@ -127,6 +242,7 @@ const Verify = () => {
                                         </div>
                                     </motion.div>
                                 )}
+
                                 {verificationResult && !isVerifying && (
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
@@ -159,7 +275,7 @@ const Verify = () => {
                                                     <Hash className="h-5 w-5 text-primary" />
                                                     <div>
                                                         <p className="text-sm font-medium">Hash</p>
-                                                        <p className="text-xs text-muted-foreground font-mono">
+                                                        <p className="text-xs text-muted-foreground font-mono break-all">
                                                             {verificationResult.hash}
                                                         </p>
                                                     </div>
@@ -170,6 +286,9 @@ const Verify = () => {
                                                         <p className="text-sm font-medium">Registrant</p>
                                                         <p className="text-xs text-muted-foreground">
                                                             {verificationResult.registrantName}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground font-mono">
+                                                            {verificationResult.registrant.slice(0, 10)}...{verificationResult.registrant.slice(-8)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -185,9 +304,9 @@ const Verify = () => {
                                                 <div className="flex items-center gap-3">
                                                     <FileText className="h-5 w-5 text-primary" />
                                                     <div>
-                                                        <p className="text-sm font-medium">Block</p>
+                                                        <p className="text-sm font-medium">Network</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            #{verificationResult.blockNumber}
+                                                            Optimism Mainnet
                                                         </p>
                                                     </div>
                                                 </div>
@@ -197,45 +316,53 @@ const Verify = () => {
                                 )}
                             </CardContent>
                         </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Recent Verifications</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {recentVerifications.map((verification, index) => (
-                                        <motion.div
-                                            key={index}
-                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                                            whileHover={{ scale: 1.02 }}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                {verification.status === "Valid" ? (
-                                                    <CheckCircle className="h-5 w-5 text-green-500" />
-                                                ) : (
-                                                    <XCircle className="h-5 w-5 text-red-500" />
-                                                )}
-                                                <div>
-                                                    <p className="font-mono text-sm">{verification.hash}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {verification.registrant} • {verification.timestamp}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <Badge
-                                                variant={verification.status === "Valid" ? "default" : "destructive"}
+                                    {recentVerifications.length > 0 ? (
+                                        recentVerifications.map((verification, index) => (
+                                            <motion.div
+                                                key={index}
+                                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                                                whileHover={{ scale: 1.02 }}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
                                             >
-                                                {verification.status}
-                                            </Badge>
-                                        </motion.div>
-                                    ))}
+                                                <div className="flex items-center gap-3">
+                                                    {verification.status === "Valid" ? (
+                                                        <CheckCircle className="h-5 w-5 text-green-500" />
+                                                    ) : (
+                                                        <XCircle className="h-5 w-5 text-red-500" />
+                                                    )}
+                                                    <div>
+                                                        <p className="font-mono text-sm">{verification.hash}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {verification.registrant} • {verification.timestamp}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge
+                                                    variant={verification.status === "Valid" ? "default" : "destructive"}
+                                                >
+                                                    {verification.status}
+                                                </Badge>
+                                            </motion.div>
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-muted-foreground py-4">
+                                            No recent verifications available
+                                        </p>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
                     </motion.div>
+
                     <motion.div
                         className="space-y-6"
                         initial={{ opacity: 0, x: 20 }}
@@ -269,6 +396,7 @@ const Verify = () => {
                                 </div>
                             </CardContent>
                         </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Network Statistics</CardTitle>
@@ -276,22 +404,23 @@ const Verify = () => {
                             <CardContent className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-sm">Total Hashes</span>
-                                    <span className="text-sm font-medium">1,247</span>
+                                    <span className="text-sm font-medium">{networkStats.totalHashes}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm">Verified Today</span>
-                                    <span className="text-sm font-medium">156</span>
+                                    <span className="text-sm font-medium">{networkStats.verifiedToday}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm">Success Rate</span>
-                                    <span className="text-sm font-medium">98.7%</span>
+                                    <span className="text-sm font-medium">{networkStats.successRate}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm">Avg Query Time</span>
-                                    <span className="text-sm font-medium">1.2s</span>
+                                    <span className="text-sm font-medium">{networkStats.avgQueryTime}</span>
                                 </div>
                             </CardContent>
                         </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Quick Actions</CardTitle>
@@ -300,8 +429,13 @@ const Verify = () => {
                                 <Button variant="outline" size="sm" className="w-full justify-start">
                                     Upload New Document
                                 </Button>
-                                <Button variant="outline" size="sm" className="w-full justify-start">
-                                    View Transaction
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => window.open('https://optimistic.etherscan.io', '_blank')}
+                                >
+                                    View on Etherscan
                                 </Button>
                                 <Button variant="outline" size="sm" className="w-full justify-start">
                                     Export Certificate

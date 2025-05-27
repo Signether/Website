@@ -108,7 +108,7 @@ const Hero = () => {
                                 variants={logoVariants}
                                 whileHover="hover"
                             >
-                                🖋️ Signather
+                                🖋️ Signether
                             </motion.h1>
                             <motion.p
                                 className="mx-auto max-w-2xl text-muted-foreground md:text-lg lg:text-xl"
@@ -123,12 +123,12 @@ const Hero = () => {
                             className="mt-6 flex items-center gap-4"
                             variants={itemVariants}
                         >
-                            <Link to={"/app"}>
+                            <Link to={"/app/registry"}>
                                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                                     <Button className="cursor-pointer">Open App</Button>
                                 </motion.div>
                             </Link>
-                            <Link to={"https://gov.signather.org/"}>
+                            <Link to={"https://gov.Signether.org/"}>
                                 <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                                     <Button variant={"outline"} className="cursor-pointer">
                                         Governance

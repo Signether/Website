@@ -21,7 +21,7 @@ const CTA = () => {
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
 
-                        <Link to={"https://github.com/Signather"} target="_blank">
+                        <Link to={"https://github.com/Signether"} target="_blank">
                             <Button size="lg" variant="outline" className="hover:bg-primary-foreground hover:text-primary cursor-pointer">
                                 <Github className="mr-2 h-4 w-4" />
                                 View on GitHub

@@ -1,8 +1,8 @@
-# 🖋️ Signather - Digital Signature Platform
+# 🖋️ Signether - Digital Signature Platform
 
-## 🔍 What is Signather?
+## 🔍 What is Signether?
 
-Signather is a **decentralized digital signature platform** built on **React + TypeScript + Vite** that integrates with the **DEHR (Decentralized Hash Registry)** smart contract on Optimism. It provides a modern, user-friendly interface for **digitally signing documents** and **registering file hashes** on-chain.
+Signether is a **decentralized digital signature platform** built on **React + TypeScript + Vite** that integrates with the **DEHR (Decentralized Hash Registry)** smart contract on Optimism. It provides a modern, user-friendly interface for **digitally signing documents** and **registering file hashes** on-chain.
 
 Think of it as a digital notary 📋 - providing immutable proof of document signatures and ownership with blockchain verification.
 
@@ -100,7 +100,7 @@ This allows clean imports like `import { Button } from "@/components/ui/button"`
 
 ## 🌐 Web3 Integration
 
-Signather connects to the DEHR smart contract on Optimism to:
+Signether connects to the DEHR smart contract on Optimism to:
 
 1. **Register document hashes** on-chain for immutable proof  
 2. **Verify existing registrations** and ownership  
@@ -138,7 +138,7 @@ bun run build
 
 ## 🔗 Related Projects
 
-- **[DEHR Smart Contract](/root/Projects/Signather/DEHR)** - The underlying blockchain registry  
+- **[DEHR Smart Contract](/root/Projects/Signether/DEHR)** - The underlying blockchain registry  
 - **Optimism Network** - Layer 2 scaling solution for Ethereum  
 
 ---

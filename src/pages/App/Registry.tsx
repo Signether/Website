@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Search, Download, Hash, User, Clock, ExternalLink, AlertCircle } from "lucide-react";
+import { Search, Download, Hash, User, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,18 +29,6 @@ const Registry = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const generateDocumentName = (hash: string): string => {
-        const types = ['Contract', 'Agreement', 'Legal_Document', 'Business_Plan', 'Invoice', 'Certificate'];
-        const extensions = ['.pdf', '.docx', '.txt'];
-
-        const hashNum = parseInt(hash.slice(2, 6), 16);
-        const type = types[hashNum % types.length];
-        const ext = extensions[hashNum % extensions.length];
-        const version = (hashNum % 10) + 1;
-
-        return `${type}_v${version}${ext}`;
-    };
-
     const formatTimestamp = (timestamp: number): string => {
         const now = Date.now();
         const diff = now - (timestamp * 1000);
@@ -62,7 +50,7 @@ const Registry = () => {
             // Initialize read-only contract
             await ethereumService.initializeReadOnly();
 
-            // Fetch all document registrations
+            // Fetch all document registrations using enumeration
             const contractRegistrations = await ethereumService.getAllDocumentRegistrations();
 
             const formattedRegistrations: RegistrationData[] = contractRegistrations.map((reg, index) => ({
@@ -73,9 +61,11 @@ const Registry = () => {
                 timestamp: reg.timestamp,
                 blockNumber: reg.blockNumber,
                 transactionHash: reg.transactionHash,
-                documentName: generateDocumentName(reg.hash),
+                documentName: reg.filename, // Now using actual filename from contract
                 verified: true // All registered hashes are verified
             }));
+
+            console.log('Fetched registrations using enumeration:', formattedRegistrations);
 
             setRegistrations(formattedRegistrations);
         } catch (err) {
@@ -248,25 +238,10 @@ const Registry = () => {
                                                     <p className="text-sm">
                                                         {formatTimestamp(registration.timestamp)}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Block #{registration.blockNumber.toLocaleString()}
-                                                    </p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-2"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(`https://optimistic.etherscan.io/tx/${registration.transactionHash}`, '_blank');
-                                                    }}
-                                                >
-                                                    <ExternalLink className="h-3 w-3" />
-                                                    View on Explorer
-                                                </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
