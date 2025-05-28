@@ -5,7 +5,7 @@ const TechStack = () => {
         {
             category: "Frontend",
             icon: <Code className="h-5 w-5" />,
-            items: ["React 18", "TypeScript", "Vite"],
+            items: ["React 19", "TypeScript", "Vite"],
             description: "Modern development stack"
         },
         {

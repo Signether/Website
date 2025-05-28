@@ -23,7 +23,7 @@ Think of it as a digital notary 📋 - providing immutable proof of document sig
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite  
+- **Frontend**: React 19 + TypeScript + Vite  
 - **Styling**: Tailwind CSS  
 - **Web3**: ethers.js / wagmi  
 - **Blockchain**: Optimism Network  

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { WalletConnect } from "@Features/shared/components/WalletConnect";
 import CryptoJS from 'crypto-js';
@@ -29,7 +28,6 @@ const Upload = () => {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [registrantName, setRegistrantName] = useState("");
-    const [description, setDescription] = useState("");
     const [isRegistering, setIsRegistering] = useState(false);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -39,10 +37,7 @@ const Upload = () => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'application/pdf': ['.pdf'],
-            'application/msword': ['.doc'],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-            'text/plain': ['.txt']
+            'application/*': [],
         },
         multiple: true
     });
@@ -87,19 +82,14 @@ const Upload = () => {
                 const file = files[i];
                 const hash = await generateFileHash(file);
 
-                // Update progress
                 setProgress(((i + 0.5) / files.length) * 100);
 
-                // Register hash on blockchain with filename
                 await registerHash(hash, file.name);
 
-                // Update progress
                 setProgress(((i + 1) / files.length) * 100);
             }
 
-            // Reset form after successful upload
             setFiles([]);
-            setDescription("");
         } catch (error) {
             console.error('Upload failed:', error);
         } finally {
@@ -241,7 +231,7 @@ const Upload = () => {
                                         <div>
                                             <p className="text-lg mb-2">Drag & drop files here, or click to select</p>
                                             <p className="text-sm text-muted-foreground">
-                                                Supports PDF, DOC, DOCX, TXT files
+                                                Supports every file type
                                             </p>
                                         </div>
                                     )}

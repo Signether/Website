@@ -208,17 +208,6 @@ const Dashboard = () => {
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                            {walletData?.name && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-sm font-medium text-primary">{walletData.name}</span>
-                                    {address && (
-                                        <Badge variant="outline" className="text-xs">
-                                            {address.slice(0, 6)}...{address.slice(-4)}
-                                        </Badge>
-                                    )}
-                                </div>
-                            )}
                         </div>
                         <p className="text-muted-foreground">
                             Manage your digital signatures and document verification
@@ -351,7 +340,7 @@ const Dashboard = () => {
                                 <CardTitle>Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <Link to="/app/upload">
+                                <Link to="/app/upload" className="block">
                                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                         <Button
                                             variant="outline"
@@ -363,7 +352,7 @@ const Dashboard = () => {
                                         </Button>
                                     </motion.div>
                                 </Link>
-                                <Link to="/app/verify">
+                                <Link to="/app/verify" className="block">
                                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                         <Button variant="outline" className="w-full justify-start gap-2">
                                             <Hash className="h-4 w-4" />
@@ -371,7 +360,7 @@ const Dashboard = () => {
                                         </Button>
                                     </motion.div>
                                 </Link>
-                                <Link to="/app/register">
+                                <Link to="/app/register" className="block">
                                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                         <Button
                                             variant="outline"
